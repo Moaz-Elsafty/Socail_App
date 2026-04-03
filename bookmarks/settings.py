@@ -101,6 +101,11 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+AUTHENTICATION_BACKENDS = [
+    'account.authentication.EmailAuthBackend', # custom class that enables the user to login by username or email
+    'django.contrib.auth.backends.ModelBackend', # default django auth class
+]
+
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.0/topics/i18n/
