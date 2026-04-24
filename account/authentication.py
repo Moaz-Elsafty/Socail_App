@@ -5,7 +5,7 @@ from .models import Profile
 
 class EmailAndUsernameAuthBackend:
     """
-    Authenticate using an e-mail address.
+    Authenticate using an e-mail address and Username.
     """
     def authenticate(self, request, username=None, password=None):
         if not username or not password :
