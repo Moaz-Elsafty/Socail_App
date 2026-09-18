@@ -11,6 +11,8 @@ from .forms import (
     ProfileEditForm
 )
 from .models import Profile, Contact
+from actions.utils import create_action
+from actions.models import Action
 
 User = get_user_model()
 
@@ -66,12 +68,35 @@ def user_login(request):
             
 @login_required
 def dashboard(request):
+    # Display all actions by default
+    # 1. Base Queryset: Extract current user AND superusers ids
+    excluded_user_ids = set(
+        User.objects.filter(is_superuser=True).values_list('id', flat=True)
+    )
+    excluded_user_ids.add(request.user.id)
 
+    # 2. Get IDs of the following users
+    following_ids = request.user.following.values_list(
+        'id', flat=True
+    )
+    # 3. If following_ids then show ONLY those users' actions
+    if following_ids:
+        # If user is following others, retrieve only their actions
+        actions = Action.objects.filter(user_id__in=following_ids)
+    else:
+        actions = Action.objects.all()
+
+    # 4. Extract users from the query
+    actions = actions.exclude(user_id__in=excluded_user_ids)
+
+    actions = actions.select_related(
+        'user', 'user__profile'
+    ).prefetch_related('target')[:10]
     
     return render(
         request,
         'account/dashboard.html',
-        {'section': 'dashboard'}
+        {'section': 'dashboard', 'actions': actions}
     )
 
 
@@ -89,7 +114,7 @@ def register(request):
             new_user.save()
             # Create the user profile
             Profile.objects.create(user=new_user)
-
+            create_action(new_user, 'has created an account')
             return render(
                 request,
                 'account/register_done.html',
@@ -157,6 +182,7 @@ def user_follow(request):
                     user_from=request.user,
                     user_to=user
                 )
+                create_action(request.user, 'is following', user)
             else:
                 Contact.objects.filter(
                     user_from=request.user,
