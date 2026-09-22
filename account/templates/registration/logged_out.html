@@ -1,11 +1,10 @@
-{% extends "base.html" %}
+{% extends "auth_base.html" %}
 
 {% block title %}Logged out{% endblock %}
 
-{% block content %}
-    <h1>Logged out</h1>
-    <p>
-        You have been sucessfully logged out.
-        You can <a href="{% url 'login' %}">log-in again.</a>
-    </p>
+{% block auth_content %}
+    <div class="auth-icon">{% include "includes/icon.html" with name="log-out" %}</div>
+    <h1>See you soon</h1>
+    <p>You have been successfully logged out.</p>
+    <a href="{% url 'login' %}" class="btn btn-lg btn-block">Log in again</a>
 {% endblock %}

@@ -1,82 +1,117 @@
 {% extends "base.html" %}
+{% load thumbnail %}
 
 {% block title %}{{ image.title }}{% endblock %}
 
 {% block content %}
-    <h1>{{ image.title }}</h1>
-    {% load thumbnail %}
-    <a href="{{ image.image.url }}">
-        <img src="{% thumbnail image.image 300x0 %}" class="image-detail">
-    </a>
-    {% with total_likes=image.users_like.count users_like=image.users_like.all %}
-        <div class="image-info">
-            <div>
-                <span class="count">
-                <span class="total">{{ total_likes }}</span>
-                    like{{ total_likes|pluralize }}
-                </span>
-                <span class="count">
-                    {{ total_views }} view{{ total_views|pluralize }}
-                </span>
-                <a href="#" data-id="{{ image.id }}" data-action="{% if request.user in users_like %}un{% endif %}like" class="like button">
-                    {% if request.user not in users_like %}
-                        like
-                    {% else %}
-                        Unlike
-                    {% endif %}
+    {% with total_likes=image.users_like.count users_like=image.users_like.all owner=image.user %}
+    <a href="{% url "images:list" %}" class="btn btn-ghost btn-sm" style="margin-bottom: 20px;">{% include "includes/icon.html" with name="arrow-left" %} Back to explore</a>
+    <div class="image-detail">
+        <a href="{{ image.image.url }}" class="image-detail-media" target="_blank" rel="noopener">
+            <img src="{% thumbnail image.image 1000x0 %}" alt="{{ image.title }}">
+        </a>
+
+        <aside class="image-detail-panel">
+            <h1>{{ image.title }}</h1>
+
+            <div class="owner">
+                <a href="{{ owner.get_absolute_url }}">{% include "includes/avatar.html" with user=owner size="md" %}</a>
+                <div class="owner-meta">
+                    <a href="{{ owner.get_absolute_url }}">{{ owner.get_full_name|default:owner.username }}</a>
+                    <span>Bookmarked {{ image.created|timesince }} ago</span>
+                </div>
+            </div>
+
+            {% if image.description %}
+                <div class="description">{{ image.description|linebreaks }}</div>
+            {% endif %}
+
+            <div class="metrics">
+                <div class="metric">
+                    {% include "includes/icon.html" with name="heart" %}
+                    <div><strong class="js-like-count">{{ total_likes }}</strong><span>Like{{ total_likes|pluralize }}</span></div>
+                </div>
+                <div class="metric">
+                    {% include "includes/icon.html" with name="eye" %}
+                    <div><strong>{{ total_views }}</strong><span>View{{ total_views|pluralize }}</span></div>
+                </div>
+            </div>
+
+            <div class="actions-row">
+                <button type="button" data-id="{{ image.id }}" data-action="{% if request.user in users_like %}un{% endif %}like"
+                        class="btn btn-lg btn-like{% if request.user in users_like %} is-active{% endif %}">
+                    {% include "includes/icon.html" with name="heart" %}
+                    <span>{% if request.user in users_like %}Liked{% else %}Like{% endif %}</span>
+                </button>
+                <a href="{{ image.url }}" class="btn btn-lg btn-secondary" target="_blank" rel="noopener noreferrer">
+                    {% include "includes/icon.html" with name="external-link" %} Source
                 </a>
             </div>
-            {{ image.description|linebreaks }}
-        </div>
-        <div class="image-likes">
-            {% for user in users_like %}
-                <div>
-                    {% if user.profile.photo %}
-                        <img src="{{ user.profile.photo.url }}">
-                    {% endif %}
-                    <p>{{ user.first_name }}</p>
-                </div>
-            {% empty %}
-                Nobody likes this image yet.
-            {% endfor %}
-        </div>
+
+            <div class="liked-by">
+                <h3>Liked by</h3>
+                {% if users_like %}
+                    <ul>
+                        {% for user in users_like %}
+                            <li>
+                                <a href="{{ user.get_absolute_url }}">
+                                    {% include "includes/avatar.html" with user=user size="sm" %}
+                                    {{ user.get_full_name|default:user.username }}
+                                </a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="muted">Nobody likes this image yet. Be the first!</p>
+                {% endif %}
+            </div>
+        </aside>
+    </div>
     {% endwith %}
 {% endblock %}
 
 {% block domready %}
-    const url = '{% url "images:like" %}'
-    var options = {
-        method: 'POST',
-        headers: {'X-CSRFToken': csrftoken},
-        mode: 'same-origin'
-    }
-    document.querySelector('a.like')
-            .addEventListener('click', function(e){
-                e.preventDefault();
-                var likeButton = this;
+    const url = '{% url "images:like" %}';
+    const likeButton = document.querySelector('.btn-like');
 
-                //add request body
-                var formData = new FormData();
-                formData.append('id', likeButton.dataset.id);
-                formData.append('action', likeButton.dataset.action);
-                options['body'] = formData;
+    likeButton.addEventListener('click', function(e) {
+        e.preventDefault();
+        likeButton.disabled = true;
 
-                // send HTTP request
-                fetch(url, options)
-                .then(response => response.json())
-                .then(data => {
-                    if (data['status'] === 'ok')
-                    {
-                        var previousAction = likeButton.dataset.action
+        // add request body
+        var formData = new FormData();
+        formData.append('id', likeButton.dataset.id);
+        formData.append('action', likeButton.dataset.action);
 
-                        var action = previousAction === 'like' ? 'unlike' : 'like';
-                        likeButton.dataset.action = action;
-                        likeButton.innerHTML = action;
+        // send HTTP request
+        fetch(url, {
+            method: 'POST',
+            headers: {'X-CSRFToken': csrftoken},
+            mode: 'same-origin',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data['status'] === 'ok') {
+                var previousAction = likeButton.dataset.action;
 
-                        var likeCount = document.querySelector('span.count .total')
-                        var totalLikes = parseInt(likeCount.innerHTML)
-                        likeCount.innerHTML = previousAction === 'like' ? totalLikes + 1 : totalLikes - 1;
-                    }
-                })
-            });
+                var action = previousAction === 'like' ? 'unlike' : 'like';
+                likeButton.dataset.action = action;
+                likeButton.classList.toggle('is-active', action === 'unlike');
+                likeButton.querySelector('span').textContent = action === 'unlike' ? 'Liked' : 'Like';
+
+                // replay the pop animation when liking
+                likeButton.classList.remove('pop');
+                if (previousAction === 'like') {
+                    void likeButton.offsetWidth;
+                    likeButton.classList.add('pop');
+                }
+
+                var likeCount = document.querySelector('.js-like-count');
+                var totalLikes = parseInt(likeCount.innerHTML);
+                likeCount.innerHTML = previousAction === 'like' ? totalLikes + 1 : totalLikes - 1;
+            }
+        })
+        .finally(() => { likeButton.disabled = false; });
+    });
 {% endblock %}

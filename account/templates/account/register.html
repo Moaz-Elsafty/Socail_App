@@ -1,13 +1,18 @@
-{% extends "base.html" %}
+{% extends "auth_base.html" %}
 
-{% block title%}Create an account{% endblock %}
+{% block title %}Create an account{% endblock %}
 
-{% block content %}
-    <h1>Create and account</h1>
-    <p>Please, sign up using the following form:</p>
-    <form method="post">
-        {{ user_form.as_p }}
+{% block auth_content %}
+    <h1>Create your account</h1>
+    <p>Join the community and start bookmarking in seconds.</p>
+    <form method="post" class="form">
         {% csrf_token %}
-        <p><input type="submit" value="Create my account"/></p>
+        {% include "includes/form_fields.html" with form=user_form %}
+        <button type="submit" class="btn btn-lg btn-block btn-gradient">Create my account</button>
+        <div class="divider">or</div>
+        <a href="{% url 'social:begin' 'google-oauth2' %}" class="btn btn-google">
+            {% include "includes/icon.html" with name="google" %} Sign up with Google
+        </a>
     </form>
+    <p class="auth-foot">Already have an account? <a href="{% url 'login' %}">Log in</a></p>
 {% endblock %}

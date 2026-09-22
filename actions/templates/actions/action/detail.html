@@ -1,46 +1,38 @@
 {% load thumbnail %}
 
-{% with user=action.user profile=action.user.profile %}
-<div class="action">
-    <div class="images">
-        {% if profile.photo %}
-            {% thumbnail profile.photo "80x80" crop="100%" as im %}
-            <a href="{{ user.get_absolute_url }}">
-                <img src="{{ im.url }}" alt="{{ user.username }}" class="item-img">
-            </a>
+{% with user=action.user target=action.target %}
+<li class="feed-item">
+    <a href="{{ user.get_absolute_url }}" class="feed-avatar">
+        {% include "includes/avatar.html" with user=user size="md" %}
+        {% if "like" in action.verb %}
+            <span class="feed-badge like">{% include "includes/icon.html" with name="heart" %}</span>
+        {% elif "follow" in action.verb %}
+            <span class="feed-badge follow">{% include "includes/icon.html" with name="user-plus" %}</span>
+        {% elif "bookmark" in action.verb %}
+            <span class="feed-badge">{% include "includes/icon.html" with name="bookmark" %}</span>
+        {% else %}
+            <span class="feed-badge join">{% include "includes/icon.html" with name="sparkles" %}</span>
         {% endif %}
-        
-        {% if action.target %}
-            {% with target=action.target %}
-                {% if target.image %}
-                    {% thumbnail target.image "80x80" crop="100%" as im %}
-                    <a href="{{ target.get_absolute_url }}">
-                        <img src="{{ im.url }}" class="item-img">
-                    </a>
-                {% endif %}
-            {% endwith %}
+    </a>
+
+    <div class="feed-body">
+        <a href="{{ user.get_absolute_url }}">{{ user.first_name|default:user.username }}</a>
+        {{ action.verb }}
+        {% if target %}
+            <a href="{{ target.get_absolute_url }}">{{ target.get_full_name|default:target }}</a>
         {% endif %}
+        <span class="feed-time">{{ action.created|timesince }} ago</span>
     </div>
 
-    <div class="info">
-        <p>
-            <span class="date">{{ action.created|timesince }} ago</span>
-            <br />
-            <a href="{{ user.get_absolute_url }}">
-                {% if user.first_name %}
-                    {{ user.first_name }}
-                {% else %}
-                    {{ user.username }}
-                {% endif %}
-            </a>
-            {{ action.verb }}
-            
-            {% if action.target %}
-                {% with target=action.target %}
-                    <a href="{{ target.get_absolute_url }}">{{ target }}</a>
-                {% endwith %}
-            {% endif %}
-        </p>
-    </div>
-</div>
+    {% if target.image %}
+        {% thumbnail target.image "160x160" crop="smart" as im %}
+        <a href="{{ target.get_absolute_url }}" class="feed-thumb">
+            <img src="{{ im.url }}" alt="{{ target.title }}" loading="lazy">
+        </a>
+    {% elif target.username %}
+        <a href="{{ target.get_absolute_url }}">
+            {% include "includes/avatar.html" with user=target size="md" %}
+        </a>
+    {% endif %}
+</li>
 {% endwith %}

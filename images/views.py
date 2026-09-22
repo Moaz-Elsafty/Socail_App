@@ -112,10 +112,12 @@ def image_list(request):
 def image_ranking(request):
     # get image ranking dict
     image_ranking = r.zrange(
-        'image_ranking', 0, -1,
-        desc=True
-    )[:10]
-    image_ranking_ids = [int(id) for id in image_ranking]
+        'image_ranking', 0, 9,
+        desc=True,
+        withscores=True
+    )
+    image_views = {int(id): int(score) for id, score in image_ranking}
+    image_ranking_ids = list(image_views)
     # get most viewed images
     most_viewed = list(
         Image.objects.filter(
@@ -123,6 +125,9 @@ def image_ranking(request):
         )
     )
     most_viewed.sort(key=lambda x: image_ranking_ids.index(x.id))
+    # attach views count to display it in the leaderboard
+    for image in most_viewed:
+        image.total_views = image_views[image.id]
     return render(
         request,
         'images/image/ranking.html',

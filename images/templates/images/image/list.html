@@ -1,15 +1,37 @@
 {% extends "base.html" %}
 
-{% block title %}Images bookmarked{% endblock %}
+{% block title %}Explore{% endblock %}
 
 {% block content %}
-    <h1>Images bookmarked</h1>
-    <div id="image-list">
-        {% include "images/image/list_images.html" %}
+    <div class="page-header">
+        <div>
+            <span class="eyebrow">{% include "includes/icon.html" with name="compass" %} Explore</span>
+            <h1>Discover <span class="text-gradient">bookmarked images</span></h1>
+            <p>Fresh finds from across the community, newest first.</p>
+        </div>
+        <a href="{% url "images:ranking" %}" class="btn btn-secondary">{% include "includes/icon.html" with name="trophy" %} Top images</a>
     </div>
+
+    {% if images.object_list %}
+        <div class="image-grid" id="image-list">
+            {% include "images/image/list_images.html" %}
+        </div>
+        <div class="loader" id="loader" aria-label="Loading more images"><span></span><span></span><span></span></div>
+    {% else %}
+        <div class="card empty-state">
+            <div class="empty-state-icon">{% include "includes/icon.html" with name="image" %}</div>
+            <h3>Nothing here yet</h3>
+            <p>Be the first to bookmark an image. Grab the bookmarklet from your dashboard to get started.</p>
+            <a href="{% url "dashboard" %}" class="btn">Go to dashboard</a>
+        </div>
+    {% endif %}
 {% endblock %}
 
 {% block domready %}
+    var imageList = document.getElementById('image-list');
+    var loader = document.getElementById('loader');
+    if (!imageList) return;
+
     var page = 1;
     var emptyPage = false;
     var blockRequest = false;
@@ -22,11 +44,11 @@
             fetch('?images_only=1&page=' + page)
             .then(response => response.text())
             .then(html => {
-                if (html === '') {
+                if (html.trim() === '') {
                     emptyPage = true;
+                    loader.classList.add('hidden');
                 }
                 else {
-                    var imageList = document.getElementById('image-list');
                     imageList.insertAdjacentHTML('beforeEnd', html);
                     blockRequest = false;
                 }

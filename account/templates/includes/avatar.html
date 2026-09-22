@@ -1,0 +1,2 @@
+{% load thumbnail %}
+<span class="avatar avatar-{{ size|default:"md" }}">{% if user.profile.photo %}{% thumbnail user.profile.photo "256x256" crop="smart" as im %}<img src="{{ im.url }}" alt="{{ user.get_full_name|default:user.username }}" loading="lazy">{% else %}{{ user.first_name|default:user.username|first|upper }}{% endif %}</span>
