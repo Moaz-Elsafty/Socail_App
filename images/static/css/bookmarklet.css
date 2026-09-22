@@ -1,54 +1,84 @@
 #bookmarklet {
     background:#fff;
-    border-bottom:8px solid #12c064;
-    font-family:"Helvetica Neue", helvetica, arial, sans-serif !important;
-    padding:10px; overflow:auto;
-    box-shadow:0px 0px 8px 0 #666;
+    font-family:'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif !important;
+    padding:20px;
+    overflow:auto;
+    border-radius:18px;
+    border:1px solid #e4e4ee;
+    box-shadow:0 24px 60px -16px rgba(20, 20, 40, .35);
     position:fixed;
-    width:400px;
+    width:420px;
+    max-width:calc(100vw - 32px);
+    max-height:calc(100vh - 32px);
     min-height:200px;
-    top:10px;
-    right:10px;
+    top:16px;
+    right:16px;
     z-index:1000000000000;
+    box-sizing:border-box;
+}
+
+#bookmarklet::before {
+    content:"";
+    position:absolute;
+    top:0;
+    left:0;
+    right:0;
+    height:5px;
+    background:linear-gradient(135deg, #6d5dfc 0%, #b84dfb 50%, #ff4d8d 100%);
 }
 
 #bookmarklet h1 {
-    font-family:"Helvetica Neue", helvetica, arial, sans-serif;
-    font-weight:normal;
-    color:#333;
-    font-size:18px;
-    padding:4px 0 20px 0;
- }
+    font-family:'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    font-weight:700;
+    color:#15151f;
+    font-size:17px;
+    letter-spacing:-.01em;
+    margin:4px 0 16px;
+    padding:0;
+    border:0;
+}
 
 #bookmarklet #close {
     float:right;
-    font-size:18px;
+    width:30px;
+    height:30px;
+    line-height:28px;
+    text-align:center;
+    border-radius:50%;
+    font-size:20px;
     text-decoration:none;
-    color:#666;
-    margin-top:-6px;
+    color:#7a7a8c;
+    background:#f1f1f7;
 }
 
 #bookmarklet #close:hover {
-    color:#000;
+    color:#15151f;
+    background:#e9e9f2;
 }
 
 #bookmarklet .images {
-    margin-bottom:20px;
-    overflow:auto;
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    gap:8px;
 }
 
 #bookmarklet .images img {
-    border:1px solid #ccc;
-    padding:2px;
-    margin:2px;
-    opacity:0.8;
-    width:90px;
-    float:left;
-    cursor: pointer;
+    width:100%;
+    aspect-ratio:1;
+    object-fit:cover;
+    border-radius:10px;
+    border:2px solid transparent;
+    margin:0;
+    padding:0;
+    opacity:.85;
+    cursor:pointer;
+    transition:opacity .15s, border-color .15s, transform .15s;
+    box-sizing:border-box;
 }
 
 #bookmarklet .images img.selected,
 #bookmarklet .images img:hover {
-    border:1px solid #12c064;
+    border-color:#5b4cf0;
     opacity:1;
+    transform:scale(1.03);
 }

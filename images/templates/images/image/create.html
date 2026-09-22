@@ -3,11 +3,26 @@
 {% block title %}Bookmark an image{% endblock %}
 
 {% block content %}
-    <h1>Bookmark an image</h1>
-    <img src="{{ request.GET.url }}" class="image-preview">
-    <form method="post">
-        {{ form.as_p }}
-        {% csrf_token %}
-        <input type="submit" value="Bookmark it!">
-    </form>
+    <div class="page-header">
+        <div>
+            <span class="eyebrow">{% include "includes/icon.html" with name="bookmark" %} New bookmark</span>
+            <h1>Bookmark an image</h1>
+            <p>Give it a title and a short description so others can find it.</p>
+        </div>
+    </div>
+
+    <div class="grid-2 grid-2-even">
+        <div class="bookmark-preview">
+            <img src="{{ request.GET.url }}" alt="Image preview">
+        </div>
+        <div class="card">
+            <div class="card-body">
+                <form method="post" class="form">
+                    {% csrf_token %}
+                    {% include "includes/form_fields.html" %}
+                    <button type="submit" class="btn btn-lg btn-block btn-gradient">{% include "includes/icon.html" with name="bookmark" %} Bookmark it</button>
+                </form>
+            </div>
+        </div>
+    </div>
 {% endblock %}

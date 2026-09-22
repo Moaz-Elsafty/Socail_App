@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block main %}
+<main class="auth">
+    <aside class="auth-visual">
+        <div class="floating-cards" aria-hidden="true">
+            <div class="fc fc-1"><div class="fc-img"></div><div class="fc-line"></div><div class="fc-line short"></div></div>
+            <div class="fc fc-2"><div class="fc-img"></div><div class="fc-line"></div><div class="fc-line short"></div></div>
+            <div class="fc fc-3"><div class="fc-img"></div><div class="fc-line"></div><div class="fc-line short"></div></div>
+        </div>
+        <span class="eyebrow auth-eyebrow">{% include "includes/icon.html" with name="sparkles" %} Your visual bookmarks</span>
+        <h2>Collect the images you love from anywhere on the web.</h2>
+        <p>Bookmark images with one click, follow people with great taste, and discover what's trending in your community.</p>
+    </aside>
+    <section class="auth-panel">
+        <div class="auth-box">
+            {% block auth_content %}{% endblock %}
+        </div>
+    </section>
+</main>
+{% endblock %}

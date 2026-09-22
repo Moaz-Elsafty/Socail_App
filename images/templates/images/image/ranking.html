@@ -1,16 +1,56 @@
 {% extends "base.html" %}
+{% load thumbnail %}
 
-{% block title %}Images ranking{% endblock %}
+{% block title %}Top images{% endblock %}
 
-{% block content%}
-    <h1>Images ranking</h1>
-    <ol>
-        {% for image in most_viewed %}
-            <li>
-                <a href="{{ image.get_absolute_url }}">
-                    {{ image.title }}
+{% block content %}
+    <div class="page-header">
+        <div>
+            <span class="eyebrow">{% include "includes/icon.html" with name="trophy" %} Leaderboard</span>
+            <h1>Most viewed images</h1>
+            <p>The ten images the community can't stop looking at.</p>
+        </div>
+        <a href="{% url "images:list" %}" class="btn btn-secondary">{% include "includes/icon.html" with name="compass" %} Explore all</a>
+    </div>
+
+    {% if most_viewed %}
+        <div class="podium">
+            {% for image in most_viewed|slice:":3" %}
+                <a href="{{ image.get_absolute_url }}" class="podium-card rank-{{ forloop.counter }}">
+                    {% thumbnail image.image 640x800 crop="smart" as im %}
+                    <img src="{{ im.url }}" alt="{{ image.title }}">
+                    <span class="rank-badge">{{ forloop.counter }}</span>
+                    <div class="podium-info">
+                        <h3>{{ image.title }}</h3>
+                        <span>{% include "includes/icon.html" with name="eye" %} {{ image.total_views }} view{{ image.total_views|pluralize }}</span>
+                    </div>
                 </a>
-            </li>
-        {% endfor %}
-    </ol>
+            {% endfor %}
+        </div>
+
+        {% if most_viewed|length > 3 %}
+            <section class="card">
+                <ol class="leaderboard">
+                    {% for image in most_viewed|slice:"3:" %}
+                        <li>
+                            <a href="{{ image.get_absolute_url }}">
+                                <span class="rank">{{ forloop.counter|add:3 }}</span>
+                                {% thumbnail image.image 120x120 crop="smart" as im %}
+                                <img src="{{ im.url }}" alt="{{ image.title }}">
+                                <span class="title">{{ image.title }}</span>
+                                <span class="views">{% include "includes/icon.html" with name="eye" %} {{ image.total_views }}</span>
+                            </a>
+                        </li>
+                    {% endfor %}
+                </ol>
+            </section>
+        {% endif %}
+    {% else %}
+        <div class="card empty-state">
+            <div class="empty-state-icon">{% include "includes/icon.html" with name="trophy" %}</div>
+            <h3>No rankings yet</h3>
+            <p>Once people start viewing images, the most popular ones will show up here.</p>
+            <a href="{% url "images:list" %}" class="btn">Explore images</a>
+        </div>
+    {% endif %}
 {% endblock %}

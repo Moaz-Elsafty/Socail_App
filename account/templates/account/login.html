@@ -1,16 +1,14 @@
-{% extends "base.html"%}
+{% extends "auth_base.html" %}
 
-{% block title %}Log-in{% endblock %}
+{% block title %}Log in{% endblock %}
 
-{% block content %}
-    <h1>Log-in</h1>
-    <p>
-        Please, use the following form to log-in:
-        If you don't have an account <a href="{% url 'register' %}">register here</a>
-    </p>
-    <form method="post">
-        {{ form.as_p }}
+{% block auth_content %}
+    <h1>Welcome back</h1>
+    <p>Log in to continue to Bookmarks.</p>
+    <form method="post" class="form">
         {% csrf_token %}
-        <p><input type="submit" value="Log in"></p>
+        {% include "includes/form_fields.html" %}
+        <button type="submit" class="btn btn-lg btn-block">Log in</button>
     </form>
+    <p class="auth-foot">Don't have an account? <a href="{% url 'register' %}">Create one</a></p>
 {% endblock %}

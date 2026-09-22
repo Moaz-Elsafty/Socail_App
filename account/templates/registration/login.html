@@ -1,40 +1,37 @@
-{% extends "base.html" %}
+{% extends "auth_base.html" %}
 
-{% block title %}Log-in{% endblock %}
+{% block title %}Log in{% endblock %}
 
-{% block content %}
-    <h1>Log-in</h1>
-    {% if form.errors %}
-        <p>
-            Your username and password didn't match.
-            Please try again.
-        </p>
-    {% else %}
-        <p>
-            Please, use the following form to log-in.
-            If you don't have an account <a href="{% url 'register' %}">register here</a>
-        </p>
-    {% endif %}
-    <div class="login-form">
-        <form action="{% url 'login' %}" method="post">
-            {{ form.as_p }}
-            {% csrf_token %}
-            <input type="hidden" name="next" value="{{ next }}" />
-            <p><input type="submit" value="Log in"></p>
-        </form>
-        <p>
-            <a href="{% url 'password_reset' %}">
-                Forgotten you password?
-            </a>
-        </p>
-    </div>
-    <div class="social">
-        <ul>
-            <li class="google">
-                <a href="{% url 'social:begin' 'google-oauth2' %}">
-                    Sign in with Google
-                </a>
-            </li>
-        </ul>
-    </div>
+{% block auth_content %}
+    <h1>Welcome back</h1>
+    <p>Log in with your username or email to continue.</p>
+
+    <form action="{% url 'login' %}" method="post" class="form">
+        {% if form.errors %}
+            <div class="alert">
+                {% include "includes/icon.html" with name="alert" %}
+                <div>Your username and password didn't match. Please try again.</div>
+            </div>
+        {% endif %}
+        {% csrf_token %}
+        <div class="field">
+            <label for="{{ form.username.id_for_label }}">Username or email</label>
+            {{ form.username }}
+        </div>
+        <div class="field">
+            <div class="form-footer">
+                <label for="{{ form.password.id_for_label }}">Password</label>
+                <a href="{% url 'password_reset' %}">Forgot password?</a>
+            </div>
+            {{ form.password }}
+        </div>
+        <input type="hidden" name="next" value="{{ next }}">
+        <button type="submit" class="btn btn-lg btn-block">Log in</button>
+        <div class="divider">or</div>
+        <a href="{% url 'social:begin' 'google-oauth2' %}" class="btn btn-google">
+            {% include "includes/icon.html" with name="google" %} Continue with Google
+        </a>
+    </form>
+
+    <p class="auth-foot">Don't have an account? <a href="{% url 'register' %}">Create one</a></p>
 {% endblock %}

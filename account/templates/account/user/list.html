@@ -1,22 +1,38 @@
 {% extends "base.html" %}
-{% load thumbnail %}
 
 {% block title %}People{% endblock %}
 
 {% block content %}
-    <h1>People</h1>
-    <div id="people-list">
-        {% for user in users %}
-            <div class="user">
-                <a href="{{ user.get_absolute_url }}">
-                    <img src="{% thumbnail user.profile.photo 180x180 %}">
-                </a>
-                <div class="info">
-                    <a href="{{ user.get_absolute_url }}" class="title">
-                        {{ user.get_full_name }}
-                    </a>
-                </div>
-            </div>
-        {% endfor %}
+    <div class="page-header">
+        <div>
+            <span class="eyebrow">{% include "includes/icon.html" with name="users" %} Community</span>
+            <h1>People</h1>
+            <p>Follow people to fill your dashboard with the images they discover.</p>
+        </div>
     </div>
+
+    {% if users %}
+        <div class="people-grid" id="people-list">
+            {% for user in users %}
+                <article class="card person-card">
+                    <a href="{{ user.get_absolute_url }}">
+                        {% include "includes/avatar.html" with user=user size="lg" %}
+                    </a>
+                    <h3><a href="{{ user.get_absolute_url }}">{{ user.get_full_name|default:user.username }}</a></h3>
+                    <div class="handle">@{{ user.username }}</div>
+                    {% if user == request.user %}
+                        <a href="{{ user.get_absolute_url }}" class="btn btn-soft btn-sm btn-block">That's you</a>
+                    {% else %}
+                        <a href="{{ user.get_absolute_url }}" class="btn btn-secondary btn-sm btn-block">View profile</a>
+                    {% endif %}
+                </article>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="card empty-state">
+            <div class="empty-state-icon">{% include "includes/icon.html" with name="users" %}</div>
+            <h3>No one here yet</h3>
+            <p>Invite your friends to join and start sharing images together.</p>
+        </div>
+    {% endif %}
 {% endblock %}
