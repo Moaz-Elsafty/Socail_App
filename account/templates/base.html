@@ -5,6 +5,17 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>{% block title %}{% endblock %} · Bookmarks</title>
+        <script>
+            // Apply the saved theme (or the system one) before the page paints to avoid a flash
+            (function() {
+                var theme;
+                try { theme = localStorage.getItem('theme'); } catch (e) {}
+                if (theme !== 'light' && theme !== 'dark') {
+                    theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                }
+                document.documentElement.dataset.theme = theme;
+            })();
+        </script>
         <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%236d5dfc'/><stop offset='1' stop-color='%23ff4d8d'/></linearGradient></defs><rect width='24' height='24' rx='6' fill='url(%23g)'/><path d='m17 18-5-3-5 3V7a1.5 1.5 0 0 1 1.5-1.5h7A1.5 1.5 0 0 1 17 7z' fill='white'/></svg>">
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -46,6 +57,10 @@
                 {% endif %}
 
                 <div class="nav-right">
+                    <button class="btn btn-ghost btn-icon theme-toggle" type="button" aria-label="Switch theme" title="Switch theme">
+                        {% include "includes/icon.html" with name="moon" cls="icon-moon" %}
+                        {% include "includes/icon.html" with name="sun" cls="icon-sun" %}
+                    </button>
                     {% if request.user.is_authenticated %}
                         <button class="btn btn-ghost btn-icon nav-toggle" type="button" aria-controls="nav-links" aria-expanded="false" aria-label="Toggle navigation">
                             {% include "includes/icon.html" with name="menu" %}
@@ -115,6 +130,33 @@
         <script src="//cdn.jsdelivr.net/npm/js-cookie@3.0.5/dist/js.cookie.min.js"></script>
         <script>
             const csrftoken = Cookies.get('csrftoken')
+
+            // Light / dark theme switch
+            const themeToggle = document.querySelector('.theme-toggle');
+            const root = document.documentElement;
+            const updateToggleLabel = (theme) => {
+                themeToggle.setAttribute('aria-label', theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode');
+                themeToggle.title = themeToggle.getAttribute('aria-label');
+            };
+            const setTheme = (theme, save) => {
+                root.classList.add('theme-transition');
+                root.dataset.theme = theme;
+                updateToggleLabel(theme);
+                if (save) {
+                    try { localStorage.setItem('theme', theme); } catch (e) {}
+                }
+                setTimeout(() => root.classList.remove('theme-transition'), 300);
+            };
+            updateToggleLabel(root.dataset.theme);
+            themeToggle.addEventListener('click', () => {
+                setTheme(root.dataset.theme === 'dark' ? 'light' : 'dark', true);
+            });
+            // follow the system theme until the user picks one
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+                let saved = null;
+                try { saved = localStorage.getItem('theme'); } catch (err) {}
+                if (!saved) setTheme(e.matches ? 'dark' : 'light', false);
+            });
 
             // Mobile navigation
             const navToggle = document.querySelector('.nav-toggle');
