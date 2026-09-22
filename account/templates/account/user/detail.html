@@ -1,74 +1,109 @@
 {% extends "base.html" %}
-{% load thumbnail %}
 
-{% block title %}{{ user.get_full_name }}{% endblock %}
+{% block title %}{{ user.get_full_name|default:user.username }}{% endblock %}
 
 {% block content %}
-    <h1>{{ user.get_full_name }}</h1>
-    <div class="profile-info">
-        <img src="{% thumbnail user.profile.photo 180x180 %}">
-    </div>
-    {% with total_followers=user.followers.count %}
-        <span class="count">
-            <span class="total">{{ total_followers }}</span>
-            follower{{ total_followers|pluralize }}
-        </span>
-        <a href="#" data-id="{{ user.id }}" data-action="{% if request.user in user.followers.all %}un{% endif %}follow"
-        class="follow button">
-            {% if request.user not in user.followers.all %}
-                Follow
-            {% else %}
-                Unfollow
-            {% endif %}
-        </a>
-        <div id="image-list" class="image-container">
-            {% include "images/image/list_images.html" with images=user.images_created.all %}
+    {% with total_followers=user.followers.count total_following=user.following.count images=user.images_created.all followers=user.followers.all %}
+    <section class="card profile-hero">
+        <div class="profile-cover"></div>
+        <div class="profile-main">
+            {% include "includes/avatar.html" with user=user size="xl" %}
+            <div class="profile-identity">
+                <h1>{{ user.get_full_name|default:user.username }}</h1>
+                <div class="handle">@{{ user.username }} · Joined {{ user.date_joined|date:"F Y" }}</div>
+            </div>
+            <div class="profile-side">
+                <div class="inline-stats">
+                    <div><strong>{{ images|length }}</strong><span>Image{{ images|length|pluralize }}</span></div>
+                    <div><strong class="js-follower-count">{{ total_followers }}</strong><span>Follower{{ total_followers|pluralize }}</span></div>
+                    <div><strong>{{ total_following }}</strong><span>Following</span></div>
+                </div>
+                {% if user == request.user %}
+                    <a href="{% url "edit" %}" class="btn btn-secondary">{% include "includes/icon.html" with name="pencil" %} Edit profile</a>
+                {% else %}
+                    <button type="button" data-id="{{ user.id }}" data-action="{% if request.user in followers %}un{% endif %}follow"
+                            class="btn btn-follow{% if request.user in followers %} is-active{% endif %}">
+                        {% if request.user in followers %}
+                            {% include "includes/icon.html" with name="user-check" %} <span>Following</span>
+                        {% else %}
+                            {% include "includes/icon.html" with name="user-plus" %} <span>Follow</span>
+                        {% endif %}
+                    </button>
+                {% endif %}
+            </div>
         </div>
+    </section>
+
+    <div class="section-title">
+        <h2>Bookmarked images</h2>
+    </div>
+    {% if images %}
+        <div class="image-grid" id="image-list">
+            {% include "images/image/list_images.html" with images=images %}
+        </div>
+    {% else %}
+        <div class="card empty-state">
+            <div class="empty-state-icon">{% include "includes/icon.html" with name="image" %}</div>
+            <h3>No bookmarks yet</h3>
+            <p>{% if user == request.user %}Use the bookmarklet on your dashboard to save your first image.{% else %}{{ user.first_name|default:user.username }} hasn't bookmarked any images yet.{% endif %}</p>
+        </div>
+    {% endif %}
     {% endwith %}
 {% endblock %}
 
 {% block domready %}
-    const url = '{% url "user_follow" %}';
-    var options = {
-        method: 'POST',
-        headers: {'X-CSRFToken': csrftoken},
-        mode: 'same-origin'
-    }
+    const followButton = document.querySelector('.btn-follow');
+    if (followButton) {
+        const url = '{% url "user_follow" %}';
+        const icons = {
+            follow: `{% include "includes/icon.html" with name="user-plus" %}`,
+            unfollow: `{% include "includes/icon.html" with name="user-check" %}`
+        };
 
-    document.querySelector('a.follow')
-            .addEventListener('click', function(e) {
-                e.preventDefault();
-                var followButton = this;
-                
-                // add request body
-                var formData = new FormData();
-                formData.append('id', followButton.dataset.id);
-                formData.append('action', followButton.dataset.action);
-                options['body'] = formData;
+        followButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            followButton.disabled = true;
 
-                // send HTTP request
-                fetch(url, options)
-                .then(response => response.json())
-                .then(data => {
-                    if (data['status'] === 'ok')
-                    {
-                        var previousAction = followButton.dataset.action;
+            // add request body
+            var formData = new FormData();
+            formData.append('id', followButton.dataset.id);
+            formData.append('action', followButton.dataset.action);
 
-                        // toggle button text and data-action
-                        var action = previousAction === 'follow' ? 'unfollow' : 'follow';
-
-                        followButton.dataset.action = action;
-
-                        followButton.innerHTML = action;
-
-                        // update follower count
-                        var followerCount = document.querySelector('span.count .total');
-
-                        var totalFollowers = parseInt(followerCount.innerHTML);
-                        
-                        followerCount.innerHTML = previousAction === 'follow' ? totalFollowers + 1 : totalFollowers - 1
-
-                    }
-                })
+            // send HTTP request
+            fetch(url, {
+                method: 'POST',
+                headers: {'X-CSRFToken': csrftoken},
+                mode: 'same-origin',
+                body: formData
             })
+            .then(response => response.json())
+            .then(data => {
+                if (data['status'] === 'ok') {
+                    var previousAction = followButton.dataset.action;
+
+                    // toggle button state and data-action
+                    var action = previousAction === 'follow' ? 'unfollow' : 'follow';
+                    followButton.dataset.action = action;
+                    followButton.classList.toggle('is-active', action === 'unfollow');
+                    followButton.innerHTML = action === 'unfollow'
+                        ? icons.unfollow + ' <span>Following</span>'
+                        : icons.follow + ' <span>Follow</span>';
+
+                    // update follower count
+                    var followerCount = document.querySelector('.js-follower-count');
+                    var totalFollowers = parseInt(followerCount.innerHTML);
+                    followerCount.innerHTML = previousAction === 'follow' ? totalFollowers + 1 : totalFollowers - 1;
+                }
+            })
+            .finally(() => { followButton.disabled = false; });
+        });
+
+        // hint that clicking again will unfollow
+        followButton.addEventListener('mouseenter', () => {
+            if (followButton.dataset.action === 'unfollow') followButton.querySelector('span').textContent = 'Unfollow';
+        });
+        followButton.addEventListener('mouseleave', () => {
+            if (followButton.dataset.action === 'unfollow') followButton.querySelector('span').textContent = 'Following';
+        });
+    }
 {% endblock %}

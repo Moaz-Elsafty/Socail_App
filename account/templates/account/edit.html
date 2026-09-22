@@ -1,14 +1,61 @@
 {% extends "base.html" %}
 
-{% block title %}Edit your account{% endblock %}
+{% block title %}Edit your profile{% endblock %}
 
 {% block content %}
-    <h1>Edit your account</h1>
-    <p>You can edit your account using the following form:</p>
-    <form method="post" enctype="multipart/form-data">
-        {{ user_form.as_p }}
-        {{ profile_form.as_p }}
+<div class="narrow narrow-lg">
+    <div class="page-header">
+        <div>
+            <span class="eyebrow">{% include "includes/icon.html" with name="pencil" %} Settings</span>
+            <h1>Edit your profile</h1>
+            <p>Update your personal details and how others see you.</p>
+        </div>
+        <a href="{{ request.user.get_absolute_url }}" class="btn btn-secondary">{% include "includes/icon.html" with name="eye" %} View profile</a>
+    </div>
+
+    <form method="post" enctype="multipart/form-data" class="form">
         {% csrf_token %}
-        <p><input type="submit" value="Save changes"></p>
+        <section class="card">
+            <div class="card-header"><h3>Profile photo</h3></div>
+            <div class="card-body profile-photo-field">
+                {% include "includes/avatar.html" with user=request.user size="lg" %}
+                <div class="field">
+                    <label for="{{ profile_form.photo.id_for_label }}">Upload a new photo</label>
+                    <input type="file" name="{{ profile_form.photo.html_name }}" id="{{ profile_form.photo.id_for_label }}" accept="image/*">
+                    <div class="help">A square image of at least 256×256 pixels works best.</div>
+                    {% if request.user.profile.photo %}
+                        <label class="checkbox">
+                            <input type="checkbox" name="{{ profile_form.photo.html_name }}-clear" id="{{ profile_form.photo.id_for_label }}-clear">
+                            Remove current photo
+                        </label>
+                    {% endif %}
+                    {{ profile_form.photo.errors }}
+                </div>
+            </div>
+        </section>
+
+        <section class="card">
+            <div class="card-header"><h3>Personal information</h3></div>
+            <div class="card-body form">
+                {{ user_form.non_field_errors }}
+                <div class="form-row">
+                    {% include "includes/form_field.html" with field=user_form.first_name %}
+                    {% include "includes/form_field.html" with field=user_form.last_name %}
+                </div>
+                <div class="form-row">
+                    {% include "includes/form_field.html" with field=user_form.username %}
+                    {% include "includes/form_field.html" with field=user_form.email %}
+                </div>
+                <div class="form-row">
+                    {% include "includes/form_field.html" with field=profile_form.date_of_birth %}
+                </div>
+            </div>
+        </section>
+
+        <div class="form-footer">
+            <a href="{% url "dashboard" %}" class="btn btn-ghost">Cancel</a>
+            <button type="submit" class="btn">{% include "includes/icon.html" with name="check" %} Save changes</button>
+        </div>
     </form>
+</div>
 {% endblock %}

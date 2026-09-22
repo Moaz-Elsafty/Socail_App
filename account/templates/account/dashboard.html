@@ -3,17 +3,97 @@
 {% block title %}Dashboard{% endblock %}
 
 {% block content %}
-    <h1>Dashboard</h1>
-    {% with total_images_created=request.user.images_created.count %}
-        <p>Welcome to your dashbord. You have bookmarked {{ total_images_created }} image{{ total_images_created|pluralize }}.</p>
-    {% endwith %}
-    <p>Drag the following button to your bookmarks toolbar to bookmark images from other websites -> <a href="javascript:{% include "bookmarklet_launcher.js" %}" class="button">Bookmark it</a></p>
-    <p>You can also <a href="{% url "edit" %}">edit your profile</a> or <a href="{% url "password_change" %}">change your password</a>.</p>
+    <section class="hero">
+        <div>
+            <h1>Welcome back, {{ request.user.first_name|default:request.user.username }}</h1>
+            <p>Here's what's happening with the people you follow. Keep collecting the images that inspire you.</p>
+        </div>
+        <div class="hero-actions">
+            <a href="{% url "images:list" %}" class="btn btn-secondary">{% include "includes/icon.html" with name="compass" %} Explore images</a>
+            <a href="{{ request.user.get_absolute_url }}" class="btn btn-glass">{% include "includes/icon.html" with name="user" %} My profile</a>
+        </div>
+    </section>
 
-    <h2>What's happening</h2>
-    <div id="action-list">
-        {% for action in actions %}
-            {% include "actions/action/detail.html" %}
-        {% endfor %}
+    {% with total_images_created=request.user.images_created.count total_followers=request.user.followers.count total_following=request.user.following.count total_liked=request.user.images_liked.count %}
+    <section class="stats" style="margin-bottom: 32px;">
+        <div class="stat">
+            <div class="stat-icon">{% include "includes/icon.html" with name="bookmark" %}</div>
+            <div>
+                <div class="stat-value">{{ total_images_created }}</div>
+                <div class="stat-label">Image{{ total_images_created|pluralize }} bookmarked</div>
+            </div>
+        </div>
+        <div class="stat">
+            <div class="stat-icon pink">{% include "includes/icon.html" with name="heart" %}</div>
+            <div>
+                <div class="stat-value">{{ total_liked }}</div>
+                <div class="stat-label">Image{{ total_liked|pluralize }} liked</div>
+            </div>
+        </div>
+        <div class="stat">
+            <div class="stat-icon green">{% include "includes/icon.html" with name="users" %}</div>
+            <div>
+                <div class="stat-value">{{ total_followers }}</div>
+                <div class="stat-label">Follower{{ total_followers|pluralize }}</div>
+            </div>
+        </div>
+        <div class="stat">
+            <div class="stat-icon amber">{% include "includes/icon.html" with name="user-check" %}</div>
+            <div>
+                <div class="stat-value">{{ total_following }}</div>
+                <div class="stat-label">Following</div>
+            </div>
+        </div>
+    </section>
+    {% endwith %}
+
+    <div class="grid-2">
+        <section class="card">
+            <div class="card-header">
+                <h2>{% include "includes/icon.html" with name="activity" %} What's happening</h2>
+                <a href="{% url "user_list" %}" class="btn btn-ghost btn-sm">Find people {% include "includes/icon.html" with name="arrow-right" %}</a>
+            </div>
+            {% if actions %}
+                <ul class="feed" id="action-list">
+                    {% for action in actions %}
+                        {% include "actions/action/detail.html" %}
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-state-icon">{% include "includes/icon.html" with name="activity" %}</div>
+                    <h3>No activity yet</h3>
+                    <p>Follow people to see what they bookmark, like and share right here.</p>
+                    <a href="{% url "user_list" %}" class="btn">Discover people</a>
+                </div>
+            {% endif %}
+        </section>
+
+        <aside>
+            <section class="card bookmarklet-card">
+                <div class="card-header">
+                    <h3>{% include "includes/icon.html" with name="sparkles" %} Bookmark from any site</h3>
+                </div>
+                <div class="card-body">
+                    <ol class="steps">
+                        <li>Drag the button below to your browser's bookmarks bar.</li>
+                        <li>Visit any website with images you like.</li>
+                        <li>Click the bookmark and pick an image to save it here.</li>
+                    </ol>
+                    <a href="javascript:{% include "bookmarklet_launcher.js" %}" class="btn btn-gradient bookmarklet-btn" title="Drag me to your bookmarks bar">
+                        {% include "includes/icon.html" with name="grip" %} Bookmark it
+                    </a>
+                </div>
+            </section>
+
+            <section class="card">
+                <div class="card-header"><h3>Quick links</h3></div>
+                <nav class="quick-links">
+                    <a href="{% url "images:ranking" %}">{% include "includes/icon.html" with name="trophy" %} Most viewed images {% include "includes/icon.html" with name="chevron-right" %}</a>
+                    <a href="{% url "edit" %}">{% include "includes/icon.html" with name="pencil" %} Edit your profile {% include "includes/icon.html" with name="chevron-right" %}</a>
+                    <a href="{% url "password_change" %}">{% include "includes/icon.html" with name="key" %} Change your password {% include "includes/icon.html" with name="chevron-right" %}</a>
+                </nav>
+            </section>
+        </aside>
     </div>
 {% endblock %}

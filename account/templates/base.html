@@ -1,56 +1,160 @@
 {% load static %}
 <!DOCTYPE html>
-<html>
+<html lang="en">
     <head>
-        <title>{% block title %}{% endblock %}</title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>{% block title %}{% endblock %} · Bookmarks</title>
+        <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%236d5dfc'/><stop offset='1' stop-color='%23ff4d8d'/></linearGradient></defs><rect width='24' height='24' rx='6' fill='url(%23g)'/><path d='m17 18-5-3-5 3V7a1.5 1.5 0 0 1 1.5-1.5h7A1.5 1.5 0 0 1 17 7z' fill='white'/></svg>">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
         <link href="{% static "css/base.css" %}" rel="stylesheet">
     </head>
     <body>
-        <div id="header">
-            <span class="logo">Bookmarks</span>
-            {% if request.user.is_authenticated %}
-            <ul class="menu">
-                <li {% if section == "dashboard" %}class="selected"{% endif %}>
-                    <a href="{% url "dashboard" %}">My dashboard</a>
-                </li>
-                <li {% if section == "images" %}class="selected"{% endif %}>
-                    <a href="{% url "images:list" %}">Images</a>
-                </li>
-                <li {% if section == "people" %}class="selected"{% endif %}}>
-                    <a href="{% url "user_list" %}">People</a>
-                </li>
-            </ul>
-            {% endif %}
-            
-            <span class="user">
+        {% with url_name=request.resolver_match.url_name %}
+        <header class="navbar">
+            <div class="container">
+                <a href="{% if request.user.is_authenticated %}{% url "dashboard" %}{% else %}{% url "login" %}{% endif %}" class="brand">
+                    <span class="brand-mark">{% include "includes/icon.html" with name="bookmark" %}</span>
+                    Bookmarks
+                </a>
+
                 {% if request.user.is_authenticated %}
-                    Hello {{ request.user.first_name|default:request.user.username }},
-                    <form action="{% url "logout" %}" method="post">
-                        <button type="submit">Logout</button>
-                        {% csrf_token %}
-                    </form>
-                {% else %}
-                    <a href="{% url "login" %}">Log-in</a>
+                <ul class="nav-links" id="nav-links">
+                    <li>
+                        <a href="{% url "dashboard" %}" {% if section == "dashboard" %}class="active"{% endif %}>
+                            {% include "includes/icon.html" with name="home" %} Dashboard
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url "images:list" %}" {% if section == "images" and url_name != "ranking" %}class="active"{% endif %}>
+                            {% include "includes/icon.html" with name="compass" %} Explore
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url "images:ranking" %}" {% if url_name == "ranking" %}class="active"{% endif %}>
+                            {% include "includes/icon.html" with name="trophy" %} Top images
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url "user_list" %}" {% if section == "people" %}class="active"{% endif %}>
+                            {% include "includes/icon.html" with name="users" %} People
+                        </a>
+                    </li>
+                </ul>
                 {% endif %}
-            </span>
-        </div>
+
+                <div class="nav-right">
+                    {% if request.user.is_authenticated %}
+                        <button class="btn btn-ghost btn-icon nav-toggle" type="button" aria-controls="nav-links" aria-expanded="false" aria-label="Toggle navigation">
+                            {% include "includes/icon.html" with name="menu" %}
+                        </button>
+                        <div class="user-menu">
+                            <button class="user-menu-trigger" type="button" aria-haspopup="true" aria-expanded="false">
+                                {% include "includes/avatar.html" with user=request.user size="sm" %}
+                                <span class="user-name">{{ request.user.first_name|default:request.user.username }}</span>
+                                {% include "includes/icon.html" with name="chevron-down" %}
+                            </button>
+                            <div class="dropdown" role="menu">
+                                <div class="dropdown-header">
+                                    <strong>{{ request.user.get_full_name|default:request.user.username }}</strong>
+                                    <span>@{{ request.user.username }}</span>
+                                </div>
+                                <a href="{{ request.user.get_absolute_url }}" role="menuitem">{% include "includes/icon.html" with name="user" %} View profile</a>
+                                <a href="{% url "edit" %}" role="menuitem">{% include "includes/icon.html" with name="pencil" %} Edit profile</a>
+                                <a href="{% url "password_change" %}" role="menuitem">{% include "includes/icon.html" with name="key" %} Change password</a>
+                                <hr>
+                                <form action="{% url "logout" %}" method="post">
+                                    {% csrf_token %}
+                                    <button type="submit" class="danger" role="menuitem">{% include "includes/icon.html" with name="log-out" %} Log out</button>
+                                </form>
+                            </div>
+                        </div>
+                    {% else %}
+                        <a href="{% url "login" %}" class="btn btn-ghost btn-sm">Log in</a>
+                        <a href="{% url "register" %}" class="btn btn-sm">Get started</a>
+                    {% endif %}
+                </div>
+            </div>
+        </header>
+        {% endwith %}
+
         {% if messages %}
-            <ul class="messages">
+            <ul class="toasts">
                 {% for message in messages %}
-                    <li class="{{ message.tags }}">
-                        {{ message|safe }}
-                        <a href="#" class="close">x</a>
+                    <li class="toast {{ message.tags }}" role="status">
+                        <span class="toast-icon">
+                            {% if message.tags == "success" %}{% include "includes/icon.html" with name="check-circle" %}
+                            {% elif message.tags == "error" or message.tags == "warning" %}{% include "includes/icon.html" with name="alert" %}
+                            {% else %}{% include "includes/icon.html" with name="info" %}{% endif %}
+                        </span>
+                        <div class="toast-body">{{ message|safe }}</div>
+                        <button type="button" class="toast-close" aria-label="Dismiss">{% include "includes/icon.html" with name="x" %}</button>
                     </li>
                 {% endfor %}
             </ul>
         {% endif %}
-        <div id="content">
+
+        {% block main %}
+        <main class="container page">
             {% block content %}
             {% endblock %}
-        </div>
+        </main>
+
+        <footer class="site-footer">
+            <div class="container">
+                <span>&copy; {% now "Y" %} Bookmarks. Save and share the images you love.</span>
+                {% if request.user.is_authenticated %}
+                    <span><a href="{% url "images:list" %}">Explore</a> · <a href="{% url "images:ranking" %}">Top images</a> · <a href="{% url "user_list" %}">People</a></span>
+                {% endif %}
+            </div>
+        </footer>
+        {% endblock %}
+
         <script src="//cdn.jsdelivr.net/npm/js-cookie@3.0.5/dist/js.cookie.min.js"></script>
         <script>
             const csrftoken = Cookies.get('csrftoken')
+
+            // Mobile navigation
+            const navToggle = document.querySelector('.nav-toggle');
+            if (navToggle) {
+                navToggle.addEventListener('click', () => {
+                    const open = document.getElementById('nav-links').classList.toggle('open');
+                    navToggle.setAttribute('aria-expanded', open);
+                });
+            }
+
+            // User dropdown
+            const menuTrigger = document.querySelector('.user-menu-trigger');
+            if (menuTrigger) {
+                const dropdown = menuTrigger.nextElementSibling;
+                const setMenu = (open) => {
+                    dropdown.classList.toggle('open', open);
+                    menuTrigger.setAttribute('aria-expanded', open);
+                };
+                menuTrigger.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    setMenu(!dropdown.classList.contains('open'));
+                });
+                document.addEventListener('click', (e) => {
+                    if (!dropdown.contains(e.target)) setMenu(false);
+                });
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') setMenu(false);
+                });
+            }
+
+            // Toast messages: dismiss on click, auto-hide after a few seconds
+            document.querySelectorAll('.toast').forEach((toast, i) => {
+                const dismiss = () => {
+                    toast.classList.add('hide');
+                    setTimeout(() => toast.remove(), 300);
+                };
+                toast.querySelector('.toast-close').addEventListener('click', dismiss);
+                setTimeout(dismiss, 5000 + i * 500);
+            });
+
             document.addEventListener('DOMContentLoaded', (event) => {
                 {% block domready %}
                 {% endblock %}
