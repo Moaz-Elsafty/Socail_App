@@ -112,8 +112,6 @@ def register(request):
             )
             # Save user obj
             new_user.save()
-            # Create the user profile
-            Profile.objects.create(user=new_user)
             create_action(new_user, 'has created an account')
             return render(
                 request,
